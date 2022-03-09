@@ -1,74 +1,59 @@
-import json
 import logging
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import View
+from django.http import Http404
+from rest_framework import status
+from rest_framework.views import APIView
 
-from users.utils import return_data, return_response
+from users.serializers import UserSerializer, UserUpdateSerializer
+from users.utils import ApiResponse
 
 logging.basicConfig(filename=settings.LOG_FILE,
-                    encoding='utf-8', level=logging.warning)
+                    encoding='utf-8', level=logging.warning,
+                    format='%(levelname)s - [%(asctime)s] - %(message)s')
+
 
 logger = logging.getLogger(__name__)
 
 
 # Create your views here.
-class UserView(View):
-    model = User
+class UserApiView(APIView):
+    def get(self, request):
+        qs = User.objects.all()
+        serializer = UserSerializer(qs, many=True)
+        return ApiResponse(serializer.data, status=status.HTTP_200_OK)
 
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ApiResponse(data=serializer.data, status=status.HTTP_200_OK)
+        return ApiResponse(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request, *args, **kwargs):
-        logger.warning("user get()")
-        pk = kwargs.get('pk')
-        qs = self.model.objects.all()
+
+class UserDetailsApiView(APIView):
+    def get_object(self, pk):
+        logger.info("User() accessed")
         try:
-            if pk:
-                qs = get_object_or_404(self.model, pk=pk)
-                return return_response(data=return_data(qs))
-            return return_response(data=[return_data(obj) for obj in qs])
-        except Exception as e:
-            print(e)
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise Http404
 
-    def post(self, request, *args, **kwargs):
-        logger.warning("user post()")
-        try:
-            data = json.loads(request.body)
-            password = data.pop('password')
-            obj = User(**data)
-            obj.set_password(password)
-            obj.save()
-            return return_response(status=201, data=return_data(obj))
-        except Exception as e:
-            return return_response(status="_", msg=str(e))
+    def get(self, request, pk):
+        qs = self.get_object(pk)
+        serializer = UserSerializer(qs)
+        return ApiResponse(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, *args, **kwargs):
-        logger.warning("user put()")
-        pk = kwargs.get("pk")
-        try:
-            obj = get_object_or_404(self.model, pk=pk)
-            data = json.loads(request.body)
-            obj.username = data.get("username")
-            obj.first_name = data.get("first_name")
-            obj.last_name = data.get("last_name")
-            obj.email = data.get("email")
-            obj.save()
-            return return_response(status=201, data=return_data(obj))
-        except Exception as e:
-            print(e)
+    def put(self, request, pk):
+        qs = self.get_object(pk)
+        serializer = UserUpdateSerializer(qs, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ApiResponse(data=serializer.data, status=status.HTTP_201_CREATED)
+        return ApiResponse(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, *args, **kwargs):
-        logger.warning("user delete()")
-        pk = kwargs.get("pk")
-        try:
-            obj = get_object_or_404(self.model, pk=pk)
-            obj.delete()
-            return return_response(status=204)
-        except Exception as e:
-            print(e)
+    def delete(self, request, pk):
+        qs = self.get_object(pk)
+        qs.delete()
+        return ApiResponse(status=status.HTTP_204_NO_CONTENT)

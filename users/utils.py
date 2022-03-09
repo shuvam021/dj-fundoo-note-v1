@@ -1,24 +1,17 @@
-from typing import Any
-
-from django.http import JsonResponse
+from rest_framework.response import Response
 
 
-def return_response(status: Any = 200, data=None, msg: Any = None):
+def ApiResponse(data=None, status=None, msg=""):
     message_switcher = {
-        "200": "Data fetch successful",
-        "201": "Create or Update successful",
-        "204": "Delete successful",
-        "404": "User doesn't exist",
-        "_": msg
+        200: "Data fetch successful",
+        201: "Create or Update successful",
+        204: "Delete successful",
+        404: "User doesn't exist"
     }
-    return JsonResponse({'status': status, 'message': message_switcher.get(str(status)), 'data': data}, status=status)
-
-
-def return_data(obj: object):
-    return {
-        "id": obj.id,
-        "username": obj.username,
-        "first_name": obj.first_name,
-        "last_name": obj.last_name,
-        "email": obj.email,
+    status_list = list(message_switcher.keys())
+    mod_data = {
+        'status': status,
+        'message': message_switcher.get(status) if status in status_list else msg,
+        'data': data
     }
+    return Response(data=mod_data, status=status)
