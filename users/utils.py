@@ -1,3 +1,5 @@
+import jwt
+from django.conf import settings
 from rest_framework.response import Response
 
 
@@ -15,3 +17,11 @@ def ApiResponse(data=None, status=None, msg=""):
         'data': data
     }
     return Response(data=mod_data, status=status)
+
+
+def gen_token(payload):
+    return jwt.encode(payload, settings.JWT_KEY, algorithm=settings.JWT_ALGORITHMS)
+
+
+def decode_token(token):
+    return jwt.decode(token, settings.JWT_KEY, algorithms=settings.JWT_ALGORITHMS)

@@ -1,11 +1,10 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.db.models.signals import pre_save
-from django.core.mail import send_mail
 from django.conf import settings
-import logging
-logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.warning, format=FORMAT)
-logger = logging.getLogger(__name__)
+from django.contrib.auth.models import AbstractUser
+from django.core.mail import send_mail
+from django.db import models
+from django.db.models.signals import post_save
+
+from users.utils import gen_token
 
 
 # Create your models here.
@@ -22,16 +21,15 @@ class UserProfile(AbstractUser):
         return f"User({self.username})"
 
 
-def user_post_save(sender, instance, *args, **kwargs):
-    logger.warning(f"verification mail send to {instance.first_name} accessed")
-    try:
-        send_mail(
-            'Verify Your Account',
-            'Click this link to verify your account http://127.0.0.1:8000/{jwt}',
-            settings.EMAIL_HOST, (instance.email,), fail_silently=False
-        )
-    except Exception as e:
-        print(e)
+def user_post_save(sender, instance, created, *args, **kwargs):
+    if created:
+        try:
+            token = gen_token({'id': instance.id})
+            msg_sub = "Verify Your Account"
+            msg_body = f"Click this link to verify your account\nhttp://{settings.DOMAIN_NAME}/verify/{token}/"
+            send_mail(msg_sub, msg_body, settings.EMAIL_HOST, [instance.email], fail_silently=False)
+        except Exception as e:
+            print(e)
 
 
-pre_save.connect(user_post_save, sender=UserProfile)
+post_save.connect(user_post_save, sender=UserProfile)

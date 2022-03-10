@@ -3,11 +3,12 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 
 from users.serializers import UserSerializer
-from users.utils import ApiResponse
+from users.utils import ApiResponse, decode_token
 
 FORMAT = '%(levelname)s - [%(asctime)s] - %(message)s'
 logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.warning, format=FORMAT)
@@ -69,3 +70,16 @@ class UserDetailsApiView(APIView):
         qs = self.get_object(pk)
         qs.delete()
         return ApiResponse(status=status.HTTP_204_NO_CONTENT)
+
+
+def verify_token(request, token):
+    try:
+        payload = decode_token(token)
+        obj = get_object_or_404(User, pk=int(payload.get('id')))
+        if obj:
+            obj.is_verified = True
+            obj.save()
+        return ApiResponse(status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return ApiResponse(status=status.HTTP_400_BAD_REQUEST)
