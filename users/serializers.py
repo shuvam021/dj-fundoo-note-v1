@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from django.contrib.auth import hashers
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,3 +15,9 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+    def update(self, instance, validated_data):
+        if validated_data.get('password'):
+            instance.password = hashers.make_password(validated_data.get('password'))
+        instance.save()
+        return instance
