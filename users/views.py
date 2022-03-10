@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework import status
 from rest_framework.views import APIView
@@ -9,10 +9,11 @@ from rest_framework.views import APIView
 from users.serializers import UserSerializer
 from users.utils import ApiResponse
 
-logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.warning,
-                    format='%(levelname)s - [%(asctime)s] - %(message)s')
-
+FORMAT = '%(levelname)s - [%(asctime)s] - %(message)s'
+logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.warning, format=FORMAT)
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 # Create your views here.
@@ -35,6 +36,7 @@ class UserApiView(APIView):
 
 
 class UserDetailsApiView(APIView):
+
     @staticmethod
     def get_object(pk):
         """
