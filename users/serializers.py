@@ -23,3 +23,20 @@ class UserSerializer(serializers.ModelSerializer):
             instance.password = hashers.make_password(validated_data.get('password'))
         instance.save()
         return instance
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+    password = serializers.CharField(max_length=128)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password1 = serializers.CharField(max_length=128)
+    password2 = serializers.CharField(max_length=128)
+
+    def update(self, instance, validated_data):
+        if validated_data.get('password1') != validated_data.get('password2'):
+            raise ValueError("password1 and password2 must me equal")
+        instance.password = hashers.make_password(validated_data.get('password1'))
+        instance.save()
+        return instance

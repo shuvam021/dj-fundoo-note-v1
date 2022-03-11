@@ -13,7 +13,7 @@ def ApiResponse(data=None, status=None, msg=""):
     status_list = list(message_switcher.keys())
     mod_data = {
         'status': status,
-        'message': message_switcher.get(status) if status in status_list else msg,
+        'message': message_switcher.get(status) if len(msg) == 0 else msg,
         'data': data
     }
     return Response(data=mod_data, status=status)

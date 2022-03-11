@@ -26,7 +26,9 @@ def user_post_save(sender, instance, created, *args, **kwargs):
         try:
             token = gen_token({'id': instance.id})
             msg_sub = "Verify Your Account"
-            msg_body = f"Click this link to verify your account\nhttp://{settings.DOMAIN_NAME}/verify/{token}/"
+            msg_body = f"Hii {instance.email}\n"
+            msg_body += f"Click this link to verify your account\n"
+            msg_body += f"http://{settings.DOMAIN_NAME}/verify/{token}/"
             send_mail(msg_sub, msg_body, settings.EMAIL_HOST, [instance.email], fail_silently=False)
         except Exception as e:
             print(e)
