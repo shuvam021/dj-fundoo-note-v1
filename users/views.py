@@ -5,14 +5,20 @@ from django.contrib.auth import get_user_model
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 
 from users.serializers import UserSerializer
 from users.utils import ApiResponse, decode_token
 
-FORMAT = '%(levelname)s - [%(asctime)s] - %(message)s'
-logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.warning, format=FORMAT)
+# Logging
+LOG_FORMAT = '[%(asctime)s:%(name)s] - %(levelname)s - %(filename)s - %(lineno)d - %(message)s'
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter(LOG_FORMAT)
+file_handler = logging.FileHandler(settings.LOG_FILE)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 User = get_user_model()
 
@@ -72,6 +78,7 @@ class UserDetailsApiView(APIView):
         return ApiResponse(status=status.HTTP_204_NO_CONTENT)
 
 
+@api_view(['GET'])
 def verify_token(request, token):
     try:
         payload = decode_token(token)
@@ -81,5 +88,5 @@ def verify_token(request, token):
             obj.save()
         return ApiResponse(status=status.HTTP_200_OK)
     except Exception as e:
-        print(e)
+        logger.exception(e.__str__())
         return ApiResponse(status=status.HTTP_400_BAD_REQUEST)
