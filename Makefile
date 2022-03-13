@@ -7,3 +7,6 @@ migrate:
 
 mail_debug:
 	python -m smtpd -n -c DebuggingServer localhost:1025
+
+test:
+	python .\manage.py test

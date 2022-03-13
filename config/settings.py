@@ -101,7 +101,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = True
 EMAIL_USE_TLS = False
 
-DOMAIN_NAME = "127.0.0.1:8000"
+DOMAIN_NAME = "http://127.0.0.1:8000"
 JWT_KEY = "secret"
 JWT_ALGORITHMS = "HS256"
 LOG_FORMAT = '[%(asctime)s:%(name)s] - %(levelname)s - %(filename)s - %(lineno)d - %(message)s'

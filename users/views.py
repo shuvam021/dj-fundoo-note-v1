@@ -39,7 +39,7 @@ class UserApiView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return ApiResponse(data=serializer.data, status=status.HTTP_200_OK)
+            return ApiResponse(data=serializer.data, status=status.HTTP_201_CREATED)
         return ApiResponse(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -59,13 +59,21 @@ class UserDetailsApiView(APIView):
 
     def get(self, request, pk):
         """Return a user with matching pk value"""
-        qs = self.get_object(pk)
+        try:
+            qs = self.get_object(pk)
+        except Exception as e:
+            return ApiResponse(msg=e.__str__(), status=status.HTTP_404_NOT_FOUND)
+
         serializer = UserSerializer(qs)
-        return ApiResponse(serializer.data, status=status.HTTP_200_OK)
+        return ApiResponse(data=serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
         """Update the user's details with matching pk value"""
-        qs = self.get_object(pk)
+        try:
+            qs = self.get_object(pk)
+        except Exception as e:
+            return ApiResponse(msg=e.__str__(), status=status.HTTP_404_NOT_FOUND)
+
         serializer = UserSerializer(qs, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -74,12 +82,15 @@ class UserDetailsApiView(APIView):
 
     def delete(self, request, pk):
         """Remove the user's details with matching pk value"""
-        qs = self.get_object(pk)
+        try:
+            qs = self.get_object(pk)
+        except Exception as e:
+            return ApiResponse(msg=e.__str__(), status=status.HTTP_404_NOT_FOUND)
         qs.delete()
         return ApiResponse(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['GET'])
+@api_view(['PUT'])
 def verify_token(request, token):
     try:
         payload = decode_token(token)
@@ -87,13 +98,13 @@ def verify_token(request, token):
         if obj:
             obj.is_verified = True
             obj.save()
-        return ApiResponse(status=status.HTTP_200_OK)
+        return ApiResponse(data={"id": obj.id, "is_verified": obj.is_verified}, status=status.HTTP_202_ACCEPTED)
     except Exception as e:
         logger.exception(e.__str__())
         return ApiResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def login_view(request):
     """
     User authentication view
