@@ -109,7 +109,7 @@ EMAIL_USE_TLS = False
 DOMAIN_NAME = "http://127.0.0.1:8000"
 JWT_KEY = "secret"
 JWT_ALGORITHMS = "HS256"
-JWT_EXP_TIME = 60 * 2  # second * minute
+JWT_EXP_TIME = 60 * 30  # second * minute
 LOG_FORMAT = '[%(asctime)s:%(name)s] - %(levelname)s - %(filename)s - %(lineno)d - %(message)s'
 
 # redis setup

@@ -53,6 +53,17 @@ class MailService:
         send_mail(msg_sub, msg_body, settings.EMAIL_HOST, [email], fail_silently=False)
 
 
+def get_current_user(request):
+    token = request.META.get("HTTP_AUTHORIZATION")
+    pk = int(decode_token(token.split(' ')[1]).get('id'))
+    model = get_user_model()
+    try:
+        user = model.objects.get(pk=pk)
+    except model.DoesNotExist as e:
+        raise e
+    return user
+
+
 class CustomAuth(BasePermission):
     def has_permission(self, request, view):
         auth_token = request.META.get('HTTP_AUTHORIZATION', None)
