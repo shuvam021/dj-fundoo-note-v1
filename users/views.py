@@ -11,7 +11,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 
 from users.serializers import UserSerializer
-from users.utils import ApiResponse, decode_token, gen_token, MailService
+from users.utils import ApiResponse, decode_token, gen_token, MailService, CustomAuth
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -121,6 +121,7 @@ def login_view(request):
             raise ValidationError
         token = gen_token(payload={"id": user.id})
         response = {"token": token}
+        settings.REDIS_CONFIG.set(token, user.id)
         return ApiResponse(data=response, status=status.HTTP_202_ACCEPTED, msg='Login Successful')
     except ValidationError as e:
         logger.exception(e.__str__())
