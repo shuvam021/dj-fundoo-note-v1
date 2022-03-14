@@ -21,6 +21,7 @@ import users.views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls', namespace='users')),
+    path('notes/', include('notes.urls', namespace='notes')),
     path("verify_user/<str:token>/", users.views.verify_token, name="verify_user"),
     path('login/', users.views.login_view, name="login"),
     path('forget_password/', users.views.forget_password, name="forget_password"),

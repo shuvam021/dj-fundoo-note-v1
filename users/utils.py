@@ -65,7 +65,6 @@ class CustomAuth(BasePermission):
 
         user = get_user_model().objects.filter(pk=pk)
         if user.exists():
-            self.user.is_authenticate = True
             return True
         return False
 
