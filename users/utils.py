@@ -1,12 +1,15 @@
 import datetime
+import json
 import logging
 
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils import timezone
+from redis.exceptions import RedisError
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
@@ -17,6 +20,8 @@ formatter = logging.Formatter(settings.LOG_FORMAT)
 file_handler = logging.FileHandler(settings.LOG_FILE)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
+RC = settings.REDIS_CONFIG
 
 
 def ApiResponse(data=None, status=None, msg=""):
@@ -54,14 +59,36 @@ class MailService:
 
 
 def get_current_user(request):
-    token = request.META.get("HTTP_AUTHORIZATION")
-    pk = int(decode_token(token.split(' ')[1]).get('id'))
-    model = get_user_model()
+    """
+    Return the logged-in user.
+    user's id is collected from cached memory, i.e. saved from login endpoint
+    this value
+    :param request:
+    :return:
+    """
+    token = request.META.get("HTTP_AUTHORIZATION").split(' ')[1]
+    user = get_user_model()
     try:
-        user = model.objects.get(pk=pk)
-    except model.DoesNotExist as e:
+        return user.objects.get(pk=int(RC.get(token)))
+    except user.DoesNotExist as e:
         raise e
-    return user
+    except RedisError as e:
+        raise e
+    except Exception as e:
+        raise e
+
+
+def update_cache(user_id, model) -> None:
+    """
+    Update cache memory with json data of given 'model' as:
+    { user_id: [ {model_id_1 : model_to_dict(model)},{model_id_2 : model_to_dict(model)}, ...] }
+
+    :param user_id: logged-in user
+    :param model:
+    :return:
+    """
+    data = [{item.id: model_to_dict(item)} for item in model.objects.filter(user__id=user_id)]
+    RC.set(user_id, json.dumps(data))
 
 
 class CustomAuth(BasePermission):

@@ -1,9 +1,12 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 
-from users.utils import CustomAuth, ApiResponse, get_current_user
+from users.utils import CustomAuth, ApiResponse, get_current_user, update_cache
 from .models import Note, Label
 from .serializers import NoteSerializers, LabelSerializers
+
+RC = settings.REDIS_CONFIG
 
 
 # Create your views here.
@@ -17,27 +20,16 @@ class NoteListCreateNoteApiView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         res = super().list(request, *args, **kwargs)
-        # TODO: cache list into radis
-        """
-        key = current_user_id
-        value = notes[{note_id: note_value(id, title, description, user)},]
-        radis.set(key, value)
-        ============================================
-        format
-        ============================================
-        27: [
-            {1: {"id": 1 "title": "val", "description": "val", "user" : 27}},
-            {2: {"id": 2 "title": "val", "description": "val", "user" : 27}},
-        ]
-        """
         return ApiResponse(data=res.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = get_current_user(request).id
+        user = get_current_user(request)
+        data['user'] = user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        update_cache(user.id, Note)
         return ApiResponse(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -60,12 +52,14 @@ class NoteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(qs, data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        # TODO: cache update value into radis
+
+        update_cache(get_current_user(request).id, Note)
+
         return ApiResponse(data=serializer.data, status=status.HTTP_202_ACCEPTED)
 
     def destroy(self, request, *args, **kwargs):
         res = super().destroy(request, *args, **kwargs)
-        # TODO: update cached value after successful delete
+        update_cache(get_current_user(request).id, Note)
         return ApiResponse(data=res.data, status=status.HTTP_204_NO_CONTENT)
 
 
