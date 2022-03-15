@@ -10,3 +10,7 @@ mail_debug:
 
 test:
 	python .\manage.py test
+
+# celery -A config worker -l info
+worker:
+	celery -A config worker -l info --pool=solo
