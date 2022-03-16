@@ -114,3 +114,4 @@ LOG_FORMAT = '[%(asctime)s:%(name)s] - %(levelname)s - %(filename)s - %(lineno)d
 
 # redis setup
 REDIS_CONFIG = Redis(host='localhost', port=6379, db=0)
+CELERY_BROKER_URL = "amqp://@127.0.0.1"
