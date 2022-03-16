@@ -66,10 +66,11 @@ def get_current_user(request):
     :param request:
     :return:
     """
-    token = request.META.get("HTTP_AUTHORIZATION").split(' ')[1]
+    token = request.META.get("HTTP_AUTHORIZATION")
     user = get_user_model()
     try:
-        return user.objects.get(pk=int(RC.get(token)))
+        if token:
+            return user.objects.get(pk=int(RC.get(token.split(' ')[1])))
     except user.DoesNotExist as e:
         raise e
     except RedisError as e:

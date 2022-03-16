@@ -39,7 +39,9 @@ class NoteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = get_current_user(self.request)
-        return Note.objects.filter(user__id=user.id)
+        if user:
+            return Note.objects.filter(user__id=user.id)
+        return Note.objects.filter(user__id=0)
 
     def retrieve(self, request, *args, **kwargs):
         res = super().retrieve(request, *args, **kwargs)
